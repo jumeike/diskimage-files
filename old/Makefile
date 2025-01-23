@@ -1,0 +1,31 @@
+CXX=g++
+CXX_FLAGS += -std=c++17 -O3 -g -Wall -no-pie -Wl,-E -rdynamic
+LDFLAGS = -no-pie -Wl,-E -lmemcached
+
+OUTPUT_SUFFIX=.hw
+GEM5_SUFFIX=.m5
+CEREBELLUM_SUFFIX=.crb
+
+ifeq ($(ENABLE_CEREBELLUM), 1)
+  CXX_FLAGS += -lcerebellum -DENABLE_CEREBELLUM=1 -Wfatal-errors
+  LDFLAGS   += -lcerebellum -DENABLE_CEREBELLUM=1
+  TMP_OUTPUT_SUFFIX = $(OUTPUT_SUFFIX)
+  OUTPUT_SUFFIX := $(TMP_OUTPUT_SUFFIX)$(CEREBELLUM_SUFFIX)
+endif
+
+ifeq ($(ENABLE_GEM5), 1)
+  CXX_FLAGS += -I$(M5OPS_HEADER_PATH) -I$(M5OPS_HEADER_PATH)/../util/m5/src
+  CXX_FLAGS += -DENABLE_GEM5=1
+  LDFLAGS   += -lm5 -L$(M5_BUILD_PATH)/out/
+  LDFLAGS   += -DENABLE_GEM5=1
+  TMP_OUTPUT_SUFFIX = $(OUTPUT_SUFFIX)
+  OUTPUT_SUFFIX := $(TMP_OUTPUT_SUFFIX)$(GEM5_SUFFIX)
+endif
+
+all: memcached_service$(OUTPUT_SUFFIX)
+
+%: %.cpp
+	$(CXX) $(CXX_FLAGS) $< -o $@$(OUTPUT_SUFFIX) $(LDFLAGS)
+
+clean:
+	rm -f *.hw *$(GEM5_SUFFIX) *$(CEREBELLUM_SUFFIX)
